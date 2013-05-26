@@ -11,7 +11,7 @@
     :builds {
       :main {
         :source-paths ["src/cljs"]
-        :compiler {:output-to "output"
+        :compiler {:output-to "output/cljs.js"
                    :optimizations :simple
                    :pretty-print true}
         :jar true}}}

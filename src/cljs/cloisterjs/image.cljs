@@ -1,5 +1,6 @@
 (ns cloisterjs.image
-  (:require [goog.dom :as dom])
+  (:require [goog.dom :as dom]
+            [cloisterjs.utils :as utils])
 )
 
 ; This is the image pipeline, it builds a list of pairs: an index and a
@@ -13,15 +14,6 @@
 ; loaded image resources.
 (def _bank (atom {}))
 
-(defn _test-and-swap [temp-bank space sym image]
-  "Test if temp-bank is completely filled, if it is then it flushes the contents
-  to the real _bank"
-  (let [new-bank (assoc temp-bank sym image)]
-    (when (= (count new-bank) space)
-     (swap! _bank conj new-bank))
-    new-bank
-  )
-)
 
 (declare _load-image)
 (defn _load-error [sym uri temp-bank space]
@@ -31,13 +23,21 @@
   )
 )
 
+
 (defn _load-image [sym uri temp-bank space]
   "Load an image into the temp-bank and set up a callback to check if the 
   bank is full. When it is full, it flushes the temp-bank into the actual _bank"
   (let [myimg (js/Image.)]
     (set! (. myimg -onload)
           (fn []
-            (swap! temp-bank _test-and-swap space sym myimg)
+            (let [new-bank (assoc @temp-bank sym myimg)]
+              (swap! temp-bank 
+                     utils/test-plus-swap! 
+                     assoc [sym myimg] ; first atom
+                     (= (count new-bank) space) ; condition
+                     _bank conj [new-bank] ; second atom
+              )
+            )
           ))
     (set! (. myimg -onerror) #(_load-error sym uri temp-bank space))
     (set! (. myimg -src) uri)

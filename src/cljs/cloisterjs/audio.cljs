@@ -6,11 +6,6 @@
 ; loaded sound resources.
 (def _bank (atom {}))
 
-(defn _can-play? [type]
-  "Checks if the browser supports the specific audio type"
-  (not (empty? (. (js/Audio.) canPlayType type)))
-)
-
 ; Type of audio extension as supported by the browser, when calling init-audio
 ; and passing a series of extensions, the library will check which is the
 ; preferrable extension to be used and will set the proper extension. All audio
@@ -23,6 +18,12 @@
 ; Then only "/var/www/resources/audio/mysong" will be passed to the actual audio
 ; bank and it will be loaded with the proper extension.
 (def _audio-ext (atom ""))
+
+; Set of currently playing (with loop enabled) audio files.
+(def _playing (atom #{}))
+
+; Global check if the game is muted or not.
+(def _muted (atom false))
 
 (declare _load-sound)
 (defn _load-error [sym uri temp-bank space]
@@ -52,20 +53,84 @@
   )
 )
      
-
 (defn load-sounds [key-values]
   "Receives a colletion of keys and uris of the sounds to load, returns a 
   function returning the percentage of loaded sounds, 100% = done"
   (let [loaded (atom {})
         total (count key-values)]
-    (doseq [[k v] key-values] (_load-sound k v loaded total))
+    (doseq [[k v] key-values] (_load-sound k (str v @_audio-ext) loaded total))
     (fn []
       (* (/ (count @loaded) total) 100)
     )
   )
 )
 
+(defn _can-play? [type]
+  "Checks if the browser supports the specific audio type"
+  (not (empty? (. (js/Audio.) canPlayType type)))
+)
 
+(defn set-extensions [exts]
+  "Tests a number of extensions to find the one that works in the current 
+  browser. Returns true if it succeds, else fails. Exts is a list of pairs 
+  with extension attribute and proper mime type."
+  (let [supported (filter #(_can-play? (second %)) exts)]
+    (if (empty? supported) false
+      (do
+        (reset! _audio-ext (first (first supported)))
+        true
+      )
+    )
+  )
+)
 
+(defn pause [sound]
+  "Pauses the sound"
+  (. (sound @_bank) pause)
+)
 
+(defn stop [sound]
+  "Stops the sound and removes it from the _playing queue"
+  (pause sound)
+  (set! (. (sound @_bank) -currentTime) 0)
+  (swap! _playing disj sound)
+)
 
+(defn play [sound looping]
+  "Plays the sound, setting the loop flag if required and adding the audio to 
+  the _playing queue if looping."
+  (when looping
+    (swap! _playing conj sound))
+  (set! (. (sound @_bank) -loop) looping)
+  (if (not @_muted)
+    (. (sound @_bank) play)
+    nil
+  )
+)
+
+(defn _play-all []
+  "Resume all the currently paused _playing sounds."
+  (doall (map #(play % true) @_playing))
+)
+
+(defn _pause-all []
+  "Pause all the currently playing _playing sounds."
+  (doall (map pause @_playing))
+)
+
+(defn stop-all []
+  "Stop all the currently playing _playing sounds."
+  (doall (map stop @_playing))
+)
+
+(defn toggle-audio []
+  "Sets and unsets the muted status of the game."
+  (let [toggled (swap! _muted not)]
+    (if toggled
+      (_pause-all)
+      (_play-all)
+    )
+  )
+)
+
+  

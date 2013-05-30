@@ -52,7 +52,7 @@
     (set! (. myaudio -src) uri)
   )
 )
-     
+
 (defn load-sounds [key-values]
   "Receives a colletion of keys and uris of the sounds to load, returns a 
   function returning the percentage of loaded sounds, 100% = done"
@@ -133,4 +133,3 @@
   )
 )
 
-  

@@ -14,7 +14,6 @@
 ; loaded image resources.
 (def _bank (atom {}))
 
-
 (declare _load-image)
 (defn _load-error [sym uri temp-bank space]
   "In case of a load error, retry after 200 ms"
@@ -22,7 +21,6 @@
     (. window setTimeout #(_load-image sym uri temp-bank space) 200)
   )
 )
-
 
 (defn _load-image [sym uri temp-bank space]
   "Load an image into the temp-bank and set up a callback to check if the 
@@ -56,7 +54,6 @@
   )
 )
 
-
 (defn flush-pipeline []
   "Empty the _pipeline"
   (reset! _pipeline [])
@@ -82,4 +79,3 @@
     )
   )
 )
-

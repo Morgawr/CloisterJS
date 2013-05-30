@@ -22,12 +22,3 @@
   (apply func1 atom1 body1)
 )
 
-
-
-
-
-
-
-
-
-

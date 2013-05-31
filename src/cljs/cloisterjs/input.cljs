@@ -10,9 +10,16 @@
                    :lclick false
                    :rclick false}))
 
+(defn obtain-real-coords [element event]
+  "Given a mouse movement event, extract the X and Y coordinates relative to 
+  the canvas' coordinates."
+  { :x (- (.-clientX event) (.-offsetLeft element))
+    :y (- (.-clientY event) (.-offsetTop element)) }
+)
+
 (defn mmove-listener [event]
   "OnMouseMove listener"
-  (swap! _mouse assoc :x (.-clientX event) :y (.-clientY event))
+   (this-as element (swap! _mouse conj (obtain-real-coords element event)))
 )
 
 (defn mlclick-listener [event]

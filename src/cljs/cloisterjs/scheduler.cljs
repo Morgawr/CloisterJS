@@ -8,7 +8,6 @@
 ; screen's systems. It takes care of swapping screens, removing/adding them and
 ; timing the frame succession.
 
-
 (defn get-animation-method []
   "This function checks for the suitable frame scheduling method depending on 
   the specific browser being used."

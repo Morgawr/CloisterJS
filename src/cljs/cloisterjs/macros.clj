@@ -14,7 +14,7 @@
         nname (str name)
         tctor (symbol (str (clojure.core/name tname) "."))]
    `(do
-     (defrecord ~tname ~(conj (map first initmap) (symbol "name")))
+     (defrecord ~tname ~(conj (map first initmap) (symbol "cname")))
      (defn ~name ~params (~tctor (str ~nname) ~@(map second initmap)))
     )
   )

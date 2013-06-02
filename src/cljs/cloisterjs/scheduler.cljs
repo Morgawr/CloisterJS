@@ -29,3 +29,38 @@
   )
 )
 
+(defn get-reschedule-frame 
+  "This function defines a high-performance optimization method for better 
+  framerate in browsers."
+  []
+  (let [window (dom/getWindow)
+        nextFrame (atom [])
+        messagename "zero-timeout"
+        zeroTimeout (fn [func]
+                      (swap! nextFrame conj func)
+                      (.postMessage window messagename "*")
+                    )
+        handle-msg (fn [e]
+                     (let [source (.-source e)
+                           data (.-data e)]
+                       (if (and (= source window) (= data messagename))
+                         (do
+                           (.stopPropagation e)
+                           (when (> (count @nextFrame) 0)
+                             (let [n (first @nextFrame)]
+                               (swap! nextFrame rest)
+                               (n)
+                             ))
+                         )
+                         nil
+                       )
+                     ))]
+    (.addEventListener window "message" handle-msg true)
+    zeroTimeout
+  )
+)
+
+
+                     
+                      
+

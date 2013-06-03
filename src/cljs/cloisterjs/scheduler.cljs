@@ -1,5 +1,5 @@
 (ns cloisterjs.scheduler
-  (:require [cloisterjs.image :refer [do-render]]
+  (:require [cloisterjs.image :refer [do-render fill-clear]]
             [goog.dom :as dom])
 )
 
@@ -60,7 +60,17 @@
   )
 )
 
-
-                     
-                      
+(defn start-render 
+  "This function is called to set up and start the rendering engine, which will 
+  execute endlessly"
+  [canvas]
+  (let [ctx (.getContext canvas "2d")
+        frameloop (get-animation-method)]
+    (frameloop (fn rendering []
+                 (fill-clear ctx [(.-width canvas) (.-height canvas)] "white")
+                 (do-render ctx)
+                 (frameloop rendering)
+               ))
+  )
+)
 

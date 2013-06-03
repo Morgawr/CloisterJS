@@ -86,3 +86,10 @@
     )
   )
 )
+
+(defn fill-clear
+  "Clears the whole surface and fills it with a new color"
+  [ctx [width height] color]
+  (set! (. ctx -fillStyle) color)
+  (.fillRect ctx 0 0 width height)
+)

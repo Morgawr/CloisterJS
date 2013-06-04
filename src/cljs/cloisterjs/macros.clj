@@ -64,21 +64,22 @@
   (let [tname (gensym (str name))
         nname (str name)
         tctor (symbol (str (clojure.core/name tname) "."))]
-  `(do
-     (defrecord ~tname [actors rules handler run])
-     (defn ~name []
-       (~tctor 
-         ~components 
-         ~ruleset
-         ~handler
-         (fn [state r]
-           (->> state
-                :containers ; extract containers
-                (get-containers ~components) ; retrieve only the ones we need
-                (filter-components r) ; only those who meet the validation
-                (#(doall (map ~handler %))) ; need doall to resolve lazyness
-                (reflow-state state)
-           )
+   `(do
+      (defrecord ~tname [actors rules handler run])
+      (defn ~name []
+        (~tctor 
+          ~components 
+          ~ruleset
+          ~handler
+          (fn [state r]
+            (->> state
+                 :containers ; extract containers
+                 (get-containers ~components) ; retrieve only the ones we need
+                 (filter-components r) ; only those who meet the validation
+                 (#(doall (map ~handler %))) ; need doall to resolve lazyness
+                 (reflow-state state)
+            )
+          )
         )
       )
     )

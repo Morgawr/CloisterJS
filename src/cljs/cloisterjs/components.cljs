@@ -10,6 +10,8 @@
 (defcomponent position [x y] [[x x]
                               [y y]])
 
+(defcomponent sprite [img] [[img img]])
+
 ; Name of an entity expressed inside the component, should only be called from 
 ; inside the init-entity function
 (defcomponent ename [n] [[name n]])

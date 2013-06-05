@@ -27,14 +27,14 @@
   cartesian product of all possible combinations of the given keys taken from
   the given collection"
   [names all]
-  `(apply clojure.math.combinatorics/cartesian-product 
+  `(apply cloisterjs.utils/cartesian-product
          (map #(% (select-keys ~all ~names)) ~names))
 )
 
 (defmacro filter-components
   "Given the pairs of components, filter them following a proper ruleset."
   [rules comps]
-  `(filter (fn [c] (every? #(apply % c) ~rules)) ~comps)
+  `(filter (fn [c#] (every? #(apply % c#) ~rules)) ~comps)
 )
 
 (defmacro remap-containers
@@ -65,19 +65,21 @@
         nname (str name)
         tctor (symbol (str (clojure.core/name tname) "."))]
    `(do
-      (defrecord ~tname [actors rules handler run])
+      (defrecord ~tname [~'actors ~'rules ~'handler ~'run])
       (defn ~name []
         (~tctor 
           ~components 
           ~ruleset
           ~handler
-          (fn [state r]
-            (->> state
-                 :containers ; extract containers
-                 (get-containers ~components) ; retrieve only the ones we need
-                 (filter-components r) ; only those who meet the validation
-                 (#(doall (map ~handler %))) ; need doall to resolve lazyness
-                 (reflow-state state)
+          (fn [state# r#]
+            (doall
+              (->> state#
+                   :containers ; extract containers
+                   (get-containers ~components) ; retrieve only the ones we need
+                   (filter-components r#) ; only those who meet the validation
+                   (#(map (partial apply ~handler) %))
+                   ;(reflow-state state#)
+              )
             )
           )
         )
@@ -85,12 +87,3 @@
     )
   )
 )
-
-
-
-
-
-             
-
-
-

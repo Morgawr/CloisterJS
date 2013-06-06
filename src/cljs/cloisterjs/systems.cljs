@@ -22,5 +22,21 @@
   renderme
 )
 
+(defn set-handler 
+  "Sets a new handler for the given system, useful for binding closures to 
+  the handler at runtime."
+  [system handler]
+  (assoc system :handler handler)
+)
+
+(defn run-system 
+  "Executes a system on the given gamestate"
+  [state sys]
+  ((:run sys) state (:rules sys) (:handler sys))
+)
+
+
+
+
 
 

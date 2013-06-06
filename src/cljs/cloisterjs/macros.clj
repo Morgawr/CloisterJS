@@ -71,13 +71,13 @@
           ~components 
           ~ruleset
           ~handler
-          (fn [state# r#]
+          (fn [state# r# h#]
             (doall
               (->> state#
                    :containers ; extract containers
                    (get-containers ~components) ; retrieve only the ones we need
                    (filter-components r#) ; only those who meet the validation
-                   (#(map (partial apply ~handler) %))
+                   (#(map (partial apply h#) %))
                    ;(reflow-state state#)
               )
             )

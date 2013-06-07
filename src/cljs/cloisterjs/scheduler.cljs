@@ -142,11 +142,11 @@
   [state]
   (flush-pipeline) ; clear screen 
   (->> state
-       (remove-entities) ; clear old entities
+       (add-entities) ; add newly spawned entities
        ; TODO - register time since last update
        ; TODO - REPL hooks go here
        ; TODO - update screen stuff goes here
-       (add-entities) ; add newly spawned entities
+       (remove-entities) ; clear old entities
        ((fn [s] (anim-method #(do-update s)))) ; schedule next frame
   )
 )

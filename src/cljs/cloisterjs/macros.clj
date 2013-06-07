@@ -78,7 +78,7 @@
                    (get-containers ~components) ; retrieve only the ones we need
                    (filter-components r#) ; only those who meet the validation
                    (#(map (partial apply h#) %))
-                   ;(reflow-state state#)
+                   (reflow-state state#)
               )
             )
           )

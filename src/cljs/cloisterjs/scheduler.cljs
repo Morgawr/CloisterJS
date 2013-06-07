@@ -129,7 +129,7 @@
   start the main loop."
   [entities screen]
   ; TODO - add the proper code for screen handling
-  (let [state (CloisterState 0 (comps/init-containers entities) nil nil)]
+  (let [state (CloisterState. 0 (comps/init-containers entities) nil nil)]
     (anim-method #(do-update state))
   )
 )

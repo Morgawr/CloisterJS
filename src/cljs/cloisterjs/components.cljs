@@ -16,19 +16,6 @@
 ; inside the init-entity function
 (defcomponent ename [n] [[name n]])
 
-; Component required and automatically created at the beginning of a game
-; state generation. It lists screens that have to be added in the next frame.
-(defcomponent screen-adder [] [[screens []]])
-
-; Component required and automatically created at the beginning of a game state
-; generation. It lists screens that have to be removed in the next frame.
-(defcomponent screen-remover [] [[screens []]])
-
-; Component required and automatically created at the beginning of a game state
-; generation. It lists all the entites that have to be destroyed in the next 
-; frame.
-(defcomponent entity-destroyer [] [[entities #{}]])
-
 ; DO NOT USE DIRECTLY
 (def id_counter nil)
 

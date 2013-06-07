@@ -33,8 +33,8 @@
 
 (defmacro filter-components
   "Given the pairs of components, filter them following a proper ruleset."
-  [rules comps]
-  `(filter (fn [c#] (every? #(apply % c#) ~rules)) ~comps)
+  [rules state comps]
+  `(filter (fn [c#] (every? #(apply % ~state c#) ~rules)) ~comps)
 )
 
 (defmacro remap-containers
@@ -76,8 +76,8 @@
               (->> state#
                    :containers ; extract containers
                    (get-containers ~components) ; retrieve only the ones we need
-                   (filter-components r#) ; only those who meet the validation
-                   (#(map (partial apply h#) %))
+                   (filter-components r# state#) ; only those who meet the validation
+                   (#(map (partial apply h# state#) %))
                    (reflow-state state#)
               )
             )

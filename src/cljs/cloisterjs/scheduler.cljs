@@ -9,7 +9,6 @@
 ; screen's systems. It takes care of swapping screens, removing/adding them and
 ; timing the frame succession.
 
-
 ; Global atom defining IDs of entities that have to be removed every frame
 (def _entity-recycler (atom []))
 
@@ -17,11 +16,27 @@
 ; frame
 (def _entity-spawner (atom []))
 
-(defrecord CloisterState [time ; How much time since last frame
+; Global atom defining screens to remove
+(def _screen-recycler (atom []))
+
+; Global atom defining screens to add on top
+(def _screen-spawner (atom []))
+
+
+(defrecord CloisterState [dtime ; How much time since last frame
+                          time ; Number of milliseconds of the last update
                           containers ; Dictionary of lists of common components
                           screens ; List of screens in the gamestate
                           hooks ; TODO - these should be hooks for the REPL
                           ])
+
+(defrecord CloisterScreen [depth ; depth of the layer screen
+                           popup ; if it's a popup screen or not
+                           init ; function used to initialize the screen
+                           handler ; function used to call the update
+                           fini ; function used to free screen resources
+                          ])
+
 
 (defn get-animation-method 
   "This function checks for the suitable frame scheduling method depending on 
@@ -90,6 +105,44 @@
   )
 )
 
+
+(defn remove-screens
+  "Function called every frame iteration, at the end of teh frame. It removes
+  all the screens scheduled for removal by _screen-recycler. Has the side 
+  effect of emptying _screen-recycler."
+  [state]
+  (let [toremove @_screen-recycler
+        screens (:screens state)]
+    (reset! _screen-recycler [])
+    (if (empty? toremove)
+      state
+      (doall
+        (map #((:fini %) % state) toremove)
+        (assoc state :screens (filterv (complement (set toremove) screens)))
+      )
+    )
+  )
+)
+
+(defn add-screens
+  "Function called at the beginning of every frame iteration. It retrieves all
+  the newly added screens from _screen-spawner and initializes them, adding 
+  them to the actual game state's screen list. Hasthe side effect of emptying
+  _screen-spawner."
+  [state]
+  (let [toadd @_screen-spawner
+        screens (:screens state)]
+    (reset! _screen-spawner [])
+    (if (empty? toadd)
+      state
+      (doall
+        (map #((:init %) % state) toadd)
+        (assoc state :screens (apply conj screens toadd))
+      )
+    )
+  )
+)
+
 (defn remove-entities 
   "Function called every frame iteration, at the end of the frame. It removes
   all the enities scheduled for removal by _entity-recycler. Has the side 
@@ -116,24 +169,56 @@
   (let [entities @_entity-spawner
         containers (:containers state)]
     (reset! _entity-spawner [])
-    (->> entities
-         (comps/init-containers)
-         (merge-with merge containers)
-         (assoc state :containers)
+    (if (empty? entities)
+      state
+      (->> entities
+           (comps/init-containers)
+           (merge-with merge containers)
+           (assoc state :containers)
+      )
     )
   )
 )
 
-(defn start 
-  "Given a list of entities and a starting screen, initialize the gamestate and
-  start the main loop."
-  [entities screen]
-  ; TODO - add the proper code for screen handling
-  (let [state (CloisterState. 0 (comps/init-containers entities) nil nil)]
-    (anim-method #(do-update state))
+(defn add-entity!
+  "Adds a single entity to the list of entities to be added in the next frame."
+  [entity]
+  (swap! _entity-spawner conj entity)
+)
+
+(defn destroy-entity!
+  "Specifies the ID of a single entity that will be removed in the next frame."
+  [entityID]
+  (swap! _entity-recycler conj entityID)
+)
+
+(defn add-screen!
+  "Adds a single screen on top of the screen list of the state."
+  [screen]
+  (swap! _screen-spawner conj screen)
+)
+
+(defn destroy-screen!
+  "Adds a single screen on top of the screen list to be removed."
+  [screen]
+  (swap! _screen-recycler conj screen)
+)
+
+(defn update-time 
+  "Update the time passed since last update"
+  [state]
+  (let [current (.now (js/Date.))]
+    (assoc state :dtime (- current (:time state)) :time current)
   )
 )
 
+(defn update-screens
+  "Update each single screen currently running in the state"
+  [state]
+  (let [screens (:screens state)]
+    (reduce #((:handler %2) %1 %2) state screens)
+  )
+)
 
 (defn do-update
   "This function is called every update frame, it handles the basic CloisterJS
@@ -142,12 +227,22 @@
   [state]
   (flush-pipeline) ; clear screen 
   (->> state
+       (add-screens) ; take care of screen initialization
        (add-entities) ; add newly spawned entities
-       ; TODO - register time since last update
+       (update-time) ; register time since last update
        ; TODO - REPL hooks go here
-       ; TODO - update screen stuff goes here
+       (update-screens)
+       (remove-screens) ; take care of screen removal
        (remove-entities) ; clear old entities
        ((fn [s] (anim-method #(do-update s)))) ; schedule next frame
   )
 )
 
+(defn start 
+  "Given a list of entities and a starting screen, initialize the gamestate and
+  start the main loop."
+  [entities screen]
+  (let [state (CloisterState. 0 (comps/init-containers entities) [screen] nil)]
+    (anim-method #(do-update state))
+  )
+)

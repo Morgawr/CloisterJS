@@ -5,19 +5,19 @@
 )
 
 
-(defn renderme [[_ pos] [_ sp]]
-  (img/prepare-render (:img sp)
+(defn renderme [state [id pos]]
+  (img/prepare-render (:img (id (:sprite (:containers state))))
                       [(:x pos) (:y pos)]
                       0)
   nil
 )
 
-(defn ruletest [[id1 _] [id2 _]]
-  (= id1 id2)
+(defn ruletest [state [_ _]]
+  true
 )
 
 (macros/defsystem renderer
-  [:position :sprite]
+  [:position]
   [ruletest]
   renderme
 )

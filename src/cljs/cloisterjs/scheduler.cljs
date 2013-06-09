@@ -19,7 +19,8 @@
 ; Global atom defining screens to remove
 (def _screen-recycler (atom []))
 
-; Global atom defining screens to add on top
+; Global atom defining screens to add on top, it contains pairs of screen +
+; parameters to pass to the screen's init function
 (def _screen-spawner (atom []))
 
 
@@ -30,8 +31,7 @@
                           hooks ; TODO - these should be hooks for the REPL
                           ])
 
-(defrecord CloisterScreen [depth ; depth of the layer screen
-                           popup ; if it's a popup screen or not
+(defrecord CloisterScreen [popup ; if it's a popup screen or not
                            init ; function used to initialize the screen
                            handler ; function used to call the update
                            fini ; function used to free screen resources
@@ -118,16 +118,23 @@
       state
       (doall
         (map #((:fini %) % state) toremove)
-        (assoc state :screens (filterv (complement (set toremove) screens)))
+        (assoc state :screens (filterv (complement (set toremove)) screens))
       )
     )
   )
 )
 
+(defn create-screen
+  "Given an individual screen and state, initialize it and return it to the
+  collection of screens"
+  [screen state]
+  (apply (:init (first screen)) (first screen) state (second screen))
+)
+
 (defn add-screens
   "Function called at the beginning of every frame iteration. It retrieves all
   the newly added screens from _screen-spawner and initializes them, adding 
-  them to the actual game state's screen list. Hasthe side effect of emptying
+  them to the actual game state's screen list. Has the side effect of emptying
   _screen-spawner."
   [state]
   (let [toadd @_screen-spawner
@@ -136,8 +143,8 @@
     (if (empty? toadd)
       state
       (doall
-        (map #((:init %) % state) toadd)
-        (assoc state :screens (apply conj screens toadd))
+        (assoc state :screens (apply conj screens 
+                                     (map #(create-screen % state) toadd)))
       )
     )
   )
@@ -184,6 +191,7 @@
   "Adds a single entity to the list of entities to be added in the next frame."
   [entity]
   (swap! _entity-spawner conj entity)
+  entity
 )
 
 (defn destroy-entity!
@@ -194,8 +202,8 @@
 
 (defn add-screen!
   "Adds a single screen on top of the screen list of the state."
-  [screen]
-  (swap! _screen-spawner conj screen)
+  [screen params]
+  (swap! _screen-spawner conj [screen params])
 )
 
 (defn destroy-screen!
@@ -207,16 +215,23 @@
 (defn update-time 
   "Update the time passed since last update"
   [state]
-  (let [current (.now (js/Date.))]
+  (let [current (.getTime (js/Date.))]
     (assoc state :dtime (- current (:time state)) :time current)
   )
+)
+
+(defn update-screen
+  "Update a single screen"
+  [screen state depth]
+  ((:handler screen) screen state depth)
 )
 
 (defn update-screens
   "Update each single screen currently running in the state"
   [state]
-  (let [screens (:screens state)]
-    (reduce #((:handler %2) %1 %2) state screens)
+  (doall
+    (reduce-kv #(update-screen %3 %1 %2) state (:screens state))
+    ;(assoc state :screens (map-indexed #(update-screen %2 state %1) screens))
   )
 )
 
@@ -241,8 +256,11 @@
 (defn start 
   "Given a list of entities and a starting screen, initialize the gamestate and
   start the main loop."
-  [entities screen]
-  (let [state (CloisterState. 0 (comps/init-containers entities) [screen] nil)]
-    (anim-method #(do-update state))
+  [entities screen screen-params]
+  (add-screen! screen screen-params)
+  (let [state (CloisterState. (.getTime (js/Date.))  0
+                              (comps/init-containers entities) [] nil)
+        window (dom/getWindow)]
+    ((.-setTimeout window) #(do-update state) 2000)
   )
 )

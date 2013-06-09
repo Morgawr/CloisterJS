@@ -22,38 +22,6 @@
   )
 )
 
-(defmacro get-containers
-  "Given a set of keys and the whole collection of components, returns a 
-  cartesian product of all possible combinations of the given keys taken from
-  the given collection"
-  [names all]
-  `(apply cloisterjs.utils/cartesian-product
-         (map #(% (select-keys ~all ~names)) ~names))
-)
-
-(defmacro filter-components
-  "Given the pairs of components, filter them following a proper ruleset."
-  [rules state comps]
-  `(filter (fn [c#] (every? #(apply % ~state c#) ~rules)) ~comps)
-)
-
-(defmacro remap-containers
-  "Given the list of containers, remap it with the new containers, removing 
-  deleted components"
-  [map1 map2]
-  `(apply dissoc (merge ~map1 ~map2) (map first (remove second ~map2)))
-)
-
-(defmacro reflow-state
-  "Merge all the different temporary containers and put them back into the
-  state"
-  [state in]
-  `(if (empty? ~in)
-     ~state
-     (reduce (partial merge-with remap-containers ~state) ~in)
-  )
-)
-
 (defmacro defsystem
   "Define a new system, this is a wrapping around defrecord and an automated 
   call to its constructor. It creates a new system specification with the
@@ -71,15 +39,16 @@
           ~components 
           ~ruleset
           ~handler
-          (fn [state# r# h#]
-            (doall
-              (->> state#
-                   :containers ; extract containers
-                   (get-containers ~components) ; retrieve only the ones we need
-                   (filter-components r# state#) ; only those who meet the validation
-                   (#(map (partial apply h# state#) %))
-                   (reflow-state state#)
-              )
+          (fn [state# r# h# depth#]
+            (->> state#
+                 ; extract containers
+                 (:containers)
+                 ; retrieve only the ones we need
+                 (cloisterjs.systems/get-containers ~components)
+                 ; only those who meet the validation
+                 (cloisterjs.systems/filter-components r# state#)
+                 (cloisterjs.systems/map-unlazy h# state# depth#)
+                 (cloisterjs.systems/reflow-state state#)
             )
           )
         )

@@ -1,5 +1,6 @@
 (ns cloisterjs.components
-  (:require [clojure.walk])
+  (:require [clojure.walk]
+            [cloisterjs.uniqueid :refer [id_counter]])
   (:require-macros [cloisterjs.macros :refer [defcomponent map-v]])
 )
 
@@ -10,14 +11,11 @@
 (defcomponent position [x y] [[x x]
                               [y y]])
 
-(defcomponent sprite [img] [[img img]])
+(defcomponent sprite [img] [[image img]])
 
 ; Name of an entity expressed inside the component, should only be called from 
 ; inside the init-entity function
 (defcomponent ename [n] [[name n]])
-
-; DO NOT USE DIRECTLY
-(def id_counter nil)
 
 (defn gen-id 
   "Custom implementation of gensym but with a number and not a symbol"

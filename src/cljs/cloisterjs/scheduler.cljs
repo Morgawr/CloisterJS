@@ -1,6 +1,7 @@
 (ns cloisterjs.scheduler
   (:require [cloisterjs.image :refer [do-render fill-clear flush-pipeline]]
             [cloisterjs.components :as comps]
+            [cloisterjs.input :as input]
             [goog.dom :as dom])
 )
 
@@ -231,8 +232,15 @@
   [state]
   (doall
     (reduce-kv #(update-screen %3 %1 %2) state (:screens state))
-    ;(assoc state :screens (map-indexed #(update-screen %2 state %1) screens))
   )
+)
+
+(defn clear-input-wrapper 
+  "This function is just a wrapper to properly clean the global input states of
+  mouse and keyboard while keeping track of the local gamestate."
+  [state]
+  (input/clear-mouse)
+  state
 )
 
 (defn do-update
@@ -249,6 +257,7 @@
        (update-screens)
        (remove-screens) ; take care of screen removal
        (remove-entities) ; clear old entities
+       (clear-input-wrapper)
        ((fn [s] (anim-method #(do-update s)))) ; schedule next frame
   )
 )

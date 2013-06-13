@@ -1,6 +1,7 @@
 (ns cloisterjs.loadingscreen
   (:require [cloisterjs.scheduler :as sched]
             [cloisterjs.components :as comps]
+            [cloisterjs.input :refer [mouse-state]]
             [cloisterjs.image :refer [load-images
                                       prepare-render]]
             [cloisterjs.systems :refer [run-system]])
@@ -13,6 +14,20 @@
 
 (defcomponent image-group [images] [[images images]])
 (defcomponent loaded-images [func] [[loaded func]])
+(defcomponent mouse-listenable [] [])
+
+(defsystem mouse-listener
+  [:mouse-listenable]
+  []
+  (fn [state depth _]
+    (let [state (mouse-state)
+          lstate (:lbutton state)]
+      (when (:drag-ended lstate)
+        (.log js/console "Drag ended!"))
+      nil
+    )
+  )
+)
 
 (defsystem loader 
   [:image-group]
@@ -64,10 +79,13 @@
   [screen state images audio]
   (sched/add-entity! (comps/init-entity "loader" 
                                         [(image-group images)]))
+  (sched/add-entity! (comps/init-entity "listener"
+                                        [(mouse-listenable)]))
   (assoc screen 
          :loader (loader)
          :checker (checker)
-         :renderer (renderer))
+         :renderer (renderer)
+         :mouse (mouse-listener))
 )
 
 (defn fini-screen
@@ -85,6 +103,7 @@
   "Handler of this specific screen"
   [screen state depth]
   (->> state
+       (run-system (:mouse screen) depth)
        (run-system (:loader screen) depth)
        (run-system (:checker screen) depth)
        (run-system (:renderer screen) depth)

@@ -8,13 +8,10 @@
 ; 
 ; More details: 
 ;
-;   If (dragging && dragended) during a scheduler run, then the drag'n'drop 
+;   If (dragging && drag-ended) during a scheduler run, then the drag'n'drop 
 ; operation has just ended and the program should retrieve start-pos and end-pos
 ; to calculate the offset. The dragging state will be cleared at the end of the
 ; current scheduler operation so all components should react before then.
-; If (dragging && drag-canceled) the state will be cleared at the end of the
-; current scheduler operation, any component should reset its state accordingly
-; to a canceled operation (esc pressed or fell out of the dom element).
 (def _lclick-default { 
                       :down false
                       :clicked false

@@ -29,6 +29,13 @@
                    :rbutton { :clicked false }
                   }))
 
+; Keyboard state. It's actually a dictionary of keycode + status. true = pressed
+; and false = unpressed. The important thing is to keep in mind that absent
+; keycode = never pressed = unpressed at the moment. Let the actual components
+; in game keep track of proper key tracking (keystates, keypress, etc etc), it's
+; not our issue. We just deliver the current state of the keyboard.
+(def _keyboard (atom {}))
+
 (defn clear-mouse 
   "This function should be called at the end of the game loop to remove
   click state"
@@ -134,6 +141,18 @@
   )
 )
 
+(defn key-down [event]
+  (swap! _keyboard assoc (.-keyCode event) true)
+  (.stopPropagation event)
+  (.preventDefault event)
+)
+
+(defn key-up [event]
+  (swap! _keyboard assoc (.-keyCode event) false)
+  (.stopPropagation event)
+  (.preventDefault event)
+)
+
 (defn bind-mouse 
   "Binds all the related mouse events to the given HTML element"
   [element]
@@ -144,6 +163,19 @@
   (set! (.-oncontextmenu element) mrclick-listener)
 )
 
+(defn bind-keyboard
+  "Binds all the related keyboard events to the given HTML element"
+  [element]
+  (listen element etype/KEYDOWN key-down)
+  (listen element etype/KEYUP key-up)
+)
+
 ; This is how we should access the mouse state
 (defn mouse-state [] @_mouse)
 
+; This is how we should query the keyboard's state. 
+(defn is-key-down? [keyCode]
+  (let [kc (@_keyboard keyCode)]
+    (and (not (nil? kc))  kc)
+  )
+)

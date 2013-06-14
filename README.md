@@ -16,7 +16,7 @@ It currently is still under heavy development, this is an early alpha release mi
 
 ### Browser support
 
-Currently, CloisterJS only supports the latest releases Mozilla Firefox and Google Chrome/Chromium. It is still under heavy development.
+Currently, CloisterJS only supports the latest releases of Mozilla Firefox and Google Chrome/Chromium. It is still under heavy development.
 
 ### Are there limits on the usage of the software?
 

@@ -10,7 +10,7 @@ CloisterJS is a framework/library for developing videogames on browsers. It make
 
 It provides an already existing base on which the developer can improve when developing browser games. CloisterJS provides a Component-Entity-System (CES) approach to game development removing the need of deep hierarchies of data bringing a horizontal approach to interactable entities.
 
-## The state of the project
+### The state of the project
 
 It currently is still under heavy development, this is an early alpha release missing a lot of features yet to be implemented and tested on actual games. Please be patient and feel free to snoop around the code and participate.
 

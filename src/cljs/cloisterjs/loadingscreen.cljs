@@ -36,7 +36,6 @@
   (fn [state depth [id img]] 
     (let [f (load-images (:images img))
           loaded (loaded-images f)]
-      (.log js/console id)
       { :image-group { id nil } :loaded-images { id loaded } }
     )
   )
@@ -51,7 +50,6 @@
   [finished-loading?]
   ; Print to screen after it finishes loading
   (fn [state depth [id loaded]]
-    (.log js/console "Finished loading images")
     (sched/destroy-entity! id) ; Kill the entity after we're done
     (sched/add-entity! (comps/init-entity "image"
                                           [(comps/position 100 100)

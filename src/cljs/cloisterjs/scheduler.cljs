@@ -213,6 +213,15 @@
   (swap! _screen-recycler conj screen)
 )
 
+(defn pop-screen
+  "Removes the top-most screen from the list of screens in the state."
+  [state]
+  (let [toremove (last (:screens state))]
+    (destroy-screen! toremove)
+  )
+)
+
+
 (defn update-time 
   "Update the time passed since last update"
   [state]
@@ -267,9 +276,9 @@
   start the main loop."
   [entities screen screen-params]
   (add-screen! screen screen-params)
-  (let [state (CloisterState. (.getTime (js/Date.))  0
+  (let [state (CloisterState. (.getTime (js/Date.)) (.getTime (js/Date.))
                               (comps/init-containers entities) [] nil)
         window (dom/getWindow)]
-    ((.-setTimeout window) #(do-update state) 2000)
+    (do-update state)
   )
 )

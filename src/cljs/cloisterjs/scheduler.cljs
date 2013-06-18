@@ -25,7 +25,7 @@
 (def _screen-spawner (atom []))
 
 ; Global queue that keeps track of messages (lightweight tags)
-(def _message-queue (atom []))
+(def _message-queue (atom #{}))
 
 
 (defrecord CloisterState [dtime ; How much time since last frame
@@ -243,7 +243,7 @@
   "Unload all messages from the global queue and put them into the state"
   [state]
   (let [msgs @_message-queue]
-    (reset! _message-queue [])
+    (reset! _message-queue #{})
     (assoc state :messages msgs)
   )
 )
@@ -251,7 +251,7 @@
 (defn clear-messages
   "Remove all messages from the game state queue, ready for a new iteration."
   [state]
-  (assoc state :messages [])
+  (assoc state :messages #{})
 )
 
 (defn update-screen

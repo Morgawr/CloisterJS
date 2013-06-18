@@ -56,3 +56,33 @@
     )
   )
 )
+
+(defmacro defminisystem
+  "Define a new mini-system, a mini-system is a system that doesn't actively 
+  act on entities/components, it just listens to events/messages and responds
+  to those events. This macro acts like defsystem but with a simplified 
+  approach."
+  [name message handler]
+  (let [tname (gensym (str name))
+        nname (str name)
+        tctor (symbol (str (clojure.core/name tname) "."))]
+    `(do
+       (defrecord ~tname [~'message ~'handler ~'run])
+       (defn ~name []
+         (~tctor
+           ~message
+           ~handler
+           (fn [state# h# depth#]
+             (->> state#
+                  (:messages)
+                  (cloisterjs.systems/mini-system-filter h# state# depth#
+                                                         ~message)
+                  (cloisterjs.systems/reflow-state state#)
+            )
+          )
+        )
+      )
+    )
+  )
+)
+

@@ -82,11 +82,22 @@
   (assoc system :handler handler)
 )
 
+(defn mini-system-filter 
+  [handler state depth message msglist]
+  (if (not (nil? (message msglist)))
+    (handler state depth)
+    nil
+  )
+)
+
 (defn run-system 
   "Executes a system on the given gamestate"
   [sys depth state]
   (doall
-    ((:run sys) state (:rules sys) (:handler sys) depth)
+    (if-not (nil? (:rules sys))
+      ((:run sys) state (:rules sys) (:handler sys) depth)
+      ((:run sys) state (:handler sys) depth)
+    )
   )
 )
 

@@ -24,11 +24,15 @@
 ; parameters to pass to the screen's init function
 (def _screen-spawner (atom []))
 
+; Global queue that keeps track of messages (lightweight tags)
+(def _message-queue (atom []))
+
 
 (defrecord CloisterState [dtime ; How much time since last frame
                           time ; Number of milliseconds of the last update
                           containers ; Dictionary of lists of common components
                           screens ; List of screens in the gamestate
+                          messages ; List of messages in the gamestate
                           hooks ; TODO - these should be hooks for the REPL
                           ])
 
@@ -105,7 +109,6 @@
                  ))
   )
 )
-
 
 (defn remove-screens
   "Function called every frame iteration, at the end of teh frame. It removes
@@ -213,6 +216,13 @@
   (swap! _screen-recycler conj screen)
 )
 
+(defn broadcast-msg!
+  "Adds a message to the message queue, to be received by the state in the next 
+  iteration"
+  [message]
+  (swap! _message-queue conj message)
+)
+
 (defn pop-screen
   "Removes the top-most screen from the list of screens in the state."
   [state]
@@ -221,13 +231,27 @@
   )
 )
 
-
 (defn update-time 
   "Update the time passed since last update"
   [state]
   (let [current (.getTime (js/Date.))]
     (assoc state :dtime (- current (:time state)) :time current)
   )
+)
+
+(defn receive-messages 
+  "Unload all messages from the global queue and put them into the state"
+  [state]
+  (let [msgs @_message-queue]
+    (reset! _message-queue [])
+    (assoc state :messages msgs)
+  )
+)
+
+(defn clear-messages
+  "Remove all messages from the game state queue, ready for a new iteration."
+  [state]
+  (assoc state :messages [])
 )
 
 (defn update-screen
@@ -261,9 +285,11 @@
   (->> state
        (add-screens) ; take care of screen initialization
        (add-entities) ; add newly spawned entities
+       (receive-messages) ; move messages from the global queue to the state
        (update-time) ; register time since last update
        ; TODO - REPL hooks go here
        (update-screens)
+       (clear-messages) ; remove messages from the state's queue
        (remove-screens) ; take care of screen removal
        (remove-entities) ; clear old entities
        (clear-input-wrapper)
@@ -277,7 +303,7 @@
   [entities screen screen-params]
   (add-screen! screen screen-params)
   (let [state (CloisterState. (.getTime (js/Date.)) (.getTime (js/Date.))
-                              (comps/init-containers entities) [] nil)
+                              (comps/init-containers entities) [] [] nil)
         window (dom/getWindow)]
     (do-update state)
   )

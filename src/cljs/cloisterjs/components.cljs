@@ -91,3 +91,10 @@
   [(gen-id) (conj components (ename name))]
 )
 
+(defn add-component [[eid others] component]
+  "Add a component to the specific entity, this only works before the entity
+  is actually added to the container list"
+  [eid (conj others component)]
+)
+
+

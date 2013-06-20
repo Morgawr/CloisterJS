@@ -34,6 +34,7 @@
                           screens ; List of screens in the gamestate
                           messages ; List of messages in the gamestate
                           hooks ; TODO - these should be hooks for the REPL
+                          canvas-size ; Size of the canvas [width height]
                           ])
 
 (defrecord CloisterScreen [popup ; if it's a popup screen or not
@@ -315,10 +316,11 @@
 (defn start 
   "Given a list of entities and a starting screen, initialize the gamestate and
   start the main loop."
-  [entities screen screen-params]
+  [entities screen screen-params canvas-size]
   (add-screen! screen screen-params)
   (let [state (CloisterState. (.getTime (js/Date.)) (.getTime (js/Date.))
-                              (comps/init-containers entities) [] [] nil)
+                              (comps/init-containers entities) [] [] nil
+                              canvas-size)
         window (dom/getWindow)]
     (do-update state)
   )

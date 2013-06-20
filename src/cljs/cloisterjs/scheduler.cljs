@@ -95,6 +95,19 @@
   )
 )
 
+(defn reschedule 
+  "Given how much time was passed in the last update frame, return a
+  rescheduling method with the proper timeslice."
+ [time]
+  (let [window (dom/getWindow)
+        updatetime 17]
+    (if (> 0 (- updatetime time))
+      #((.-setTimeout window) % 0)
+      #((.-setTimeout window) % (- updatetime time))
+    )
+  )
+)
+
 (def anim-method (get-animation-method))
 
 (defn start-render 
@@ -282,18 +295,20 @@
   It manages REPL hooks and handles frame succession."
   [state]
   (flush-pipeline) ; clear screen 
-  (->> state
-       (add-screens) ; take care of screen initialization
-       (add-entities) ; add newly spawned entities
-       (receive-messages) ; move messages from the global queue to the state
-       (update-time) ; register time since last update
-       ; TODO - REPL hooks go here
-       (update-screens)
-       (clear-messages) ; remove messages from the state's queue
-       (remove-screens) ; take care of screen removal
-       (remove-entities) ; clear old entities
-       (clear-input-wrapper)
-       ((fn [s] (anim-method #(do-update s)))) ; schedule next frame
+  (let [now (js/Date.)]
+    (->> state
+         (add-screens) ; take care of screen initialization
+         (add-entities) ; add newly spawned entities
+         (receive-messages) ; move messages from the global queue to the state
+         (update-time) ; register time since last update
+         ; TODO - REPL hooks go here
+         (update-screens) ; juicy part
+         (clear-messages) ; remove messages from the state queue
+         (remove-screens) ; take care of screen removal
+         (remove-entities) ; clear old entities
+         (clear-input-wrapper) ; reset input stuff for next frame
+         ((fn [s] ((reschedule (- (js/Date.) now)) #(do-update s)))) ; do again
+    )
   )
 )
 

@@ -1,31 +1,7 @@
 (ns cloisterjs.systems
   (:require [cloisterjs.utils]
             [cloisterjs.image :as img])
-  ;(:require-macros [cloisterjs.macros :as macros])
 )
-
-
-;(defn renderme [state depth [id pos]]
-;  (img/prepare-render (:img (id (:sprite (:containers state))))
-;                      [(:x pos) (:y pos)]
-;                      depth)
-;  nil
-;)
-;
-;(defn ruletest [state [_ _]]
-;  true
-;)
-;
-;(macros/defsystem renderer
-;  [:position]
-;  [ruletest]
-;  renderme
-;)
-
-;(defn get-containers
-;  "Given a set of keys and the whole collection of components, returns a 
-;  cartesian
-;
 
 (defn get-containers
   "Given a set of keys and the whole collection of components, returns a 
@@ -40,10 +16,32 @@
 )
 
 (defn filter-components
-  "Given the pairs of components, filter them following a proper ruleset."
+  "Filter the current group of components given a proper ruleset."
   [rules state comps]
-  (doall
-    (filter (fn [c] (every? #(apply % state c) rules)) comps)
+  (if (every? #(apply % state comps) rules)
+    comps
+    nil
+  )
+)
+
+(defn apply-on-component
+  "Given a handler, the state, the depth and the group of components, check if 
+  the group is not nil (aka it passed filtering successfully) and calls the 
+  handler on that. If it's nil, it returns an empty list."
+  [handler state depth cgroup]
+  (if-not (nil? cgroup)
+    (apply handler state depth cgroup)
+    []
+  )
+)
+
+(defn re-assign-components 
+  "Given the state, a list of IDs and a list of component names, return the 
+  proper pairs of ID + component for each of them."
+  [state cnames ids]
+  (let [containers (:containers state)]
+    (reverse (map (fn [c] [(second c) ((first c) (second c))]) 
+                  (zipmap (map containers cnames) ids)))
   )
 )
 
@@ -72,6 +70,33 @@
   [h state depth comps]
   (doall
     (map (partial apply h state depth) comps)
+  )
+)
+
+; 1) take only the IDs from the get-containers result
+; 2) map those IDs with their respective component from the current state
+; 3) check if that group of components meet the validations from the ruleset
+; 4) apply handler
+; 5) merge back into state
+; 6) GOTO 1 until finished
+(defn operate-on-components 
+  [rules state depth handler compnames comps]
+  (let [idlist (map (partial map first) comps) ; step 1
+        change-state 
+        (fn [ids state]
+          (->> ids 
+               (re-assign-components state compnames) ; step 2
+               (filter-components rules state) ; step 3
+               (apply-on-component handler state depth) ; step 4
+               (#(reflow-state state [%])) ; step 5
+          )
+        )]
+    (loop [ids idlist s state]
+      (if-not (empty? ids)
+        (recur (rest ids) (change-state (first ids) s)) ; step 6
+        s
+      )
+    )
   )
 )
 

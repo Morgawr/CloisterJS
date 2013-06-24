@@ -45,10 +45,12 @@
                  (:containers)
                  ; retrieve only the ones we need
                  (cloisterjs.systems/get-containers ~components)
+                 (cloisterjs.systems/operate-on-components r# state# depth#
+                                                           h# ~components)
                  ; only those who meet the validation
-                 (cloisterjs.systems/filter-components r# state#)
-                 (cloisterjs.systems/map-unlazy h# state# depth#)
-                 (cloisterjs.systems/reflow-state state#)
+                 ;(cloisterjs.systems/filter-components r# state#)
+                 ;(cloisterjs.systems/map-unlazy h# state# depth#)
+                 ;(cloisterjs.systems/reflow-state state#)
             )
           )
         )
